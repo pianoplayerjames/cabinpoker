@@ -25,13 +25,8 @@ const loggedin = inject("loggedin")
 
 const menu = [
     { name: 'Lobby', url: '/', icon: 'fa-home', color: '#d18a8a', notif: 0, auth: 0 },
-    { name: 'Inbox', url: '/inbox', icon: 'fa-inbox', color: '#519775', notif: 20, auth: 1 },
-    { name: 'Cash Games', url: '/cash', icon: 'fa-coins', color: '#bf7e26', notif: 0, auth: 0 },
     { name: 'Arena', url: '/arena', icon: 'fa-trophy', color: '#7b70c9', notif: 0, auth: 0 },
-    { name: 'Sit & go', url: '/sitngo', icon: 'fa-star', color: '#a559a7', notif: 0, auth: 0 },
-    { name: 'School', url: '/school', icon: 'fa-graduation-cap', color: '#7d9042', notif: 0, auth: 0 },
     { name: 'Donate', url: '/donate', icon: 'fa-donate', color: '#ba769a', notif: 0, auth: 0 },
-    { name: 'Leaderboards', url: '/leaderboards', icon: 'fa-crown', color: '#bfb688', notif: 0, auth: 0 },
     { name: 'Settings', url: '/settings', icon: 'fa-cog', color: '#666c52', notif: 0, auth: 1 },
     { name: 'Sign Out', url: '/signout', icon: 'fa-lock', color: '#867a90', notif: 0, auth: 1 },
 ]
