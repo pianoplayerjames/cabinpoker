@@ -1,26 +1,57 @@
 <template>
-    <div class="w-[285px] sm:w-[330px] md:w-[395px] lg:w-[420px] m-auto">
-        <div v-if="flop1 != 0" :style="{ backgroundImage : 'url(./src/assets/deck/default/' + flop1 + '.svg)', backgroundSize : 'cover' }" class="card absolute w-[50px] h-[68px] ml-[10px] mt-[30px] sm:w-[60px] sm:h-[80px] sm:ml-0 md:w-[70px] md:h-[95px] md:ml-0 lg:w-[80px] lg:h-[109px] lg:ml-0 rounded p-0"></div>
-        <div v-if="flop2 != 0" :style="{ backgroundImage : 'url(./src/assets/deck/default/' + flop2 + '.svg)', backgroundSize : 'cover' }" class="card absolute w-[50px] h-[68px] ml-[63px] mt-[30px] sm:w-[60px] sm:h-[80px] sm:ml-[70px] md:w-[70px] md:h-[95px] md:ml-[80px] lg:w-[80px] lg:h-[109px] lg:ml-[90px] rounded"></div>
-        <div v-if="flop3 != 0" :style="{ backgroundImage : 'url(./src/assets/deck/default/' + flop3 + '.svg)', backgroundSize : 'cover' }" class="card absolute w-[50px] h-[68px] ml-[116px] sm:w-[60px] sm:h-[80px] sm:ml-[140px] mt-[30px] md:w-[70px] md:h-[95px] md:ml-[160px] lg:w-[80px] lg:h-[109px] lg:ml-[180px] rounded"></div>
-        <div v-if="turn != 0" :style="{ backgroundImage : 'url(./src/assets/deck/default/' + turn + '.svg)', backgroundSize : 'cover' }" class="card absolute w-[50px] h-[68px] ml-[169px] sm:w-[60px] sm:h-[80px] sm:ml-[210px] mt-[30px] md:w-[70px] md:h-[95px] md:ml-[240px] lg:w-[80px] lg:h-[109px] lg:ml-[270px] rounded"></div>
-        <div v-if="river != 0" :style="{ backgroundImage : 'url(./src/assets/deck/default/' + river + '.svg)', backgroundSize : 'cover' }" class="card absolute w-[50px] h-[68px] ml-[222px] sm:w-[60px] sm:h-[80px] sm:ml-[280px] mt-[30px] md:w-[70px] md:h-[95px] md:ml-[320px] lg:w-[80px] lg:h-[109px] lg:ml-[360px] rounded"></div>
-    </div>
+  <div class="card-container w-[285px] sm:w-[320px] md:w-[450px] lg:w-[550px] m-auto">
+    <div
+      v-for="(card, index) in cards"
+      :key="index"
+      v-if="card !== null"
+      :style="{
+        backgroundImage: `url(../src/assets/deck/mini/${card}.svg)`,
+        backgroundSize: 'cover',
+      }"
+      class="card absolute rounded"
+      :class="getCardClasses(index)"
+    ></div>
+  </div>
 </template>
 
 <script setup>
-import { inject } from 'vue';
+import { computed } from 'vue'
+import { useGameStore } from '../../stores/store'
 
-var flop1 = inject("flop1")
-var flop2 = inject("flop2")
-var flop3= inject("flop3")
-var turn = inject("turn")
-var river = inject("river")
+const gameStore = useGameStore()
+
+const cards = computed(() => {
+  const flopCards = gameStore.flop ? gameStore.flop.filter(card => card !== null) : []
+  return [
+    ...flopCards,
+    gameStore.turn,
+    gameStore.river
+  ].filter(card => card !== null)
+})
+
+const getCardClasses = (index) => {
+  const baseClasses = 'w-[50px] h-[68px] mt-[120px] sm:mt-[120px] md:mt-[60px]'
+  const marginClasses = [
+    'ml-[10px] sm:ml-[0px] md:ml-[30px] lg:ml-[40px]',
+    'ml-[63px] sm:ml-[65px] md:ml-[110px] lg:ml-[130px]',
+    'ml-[116px] sm:ml-[130px] md:ml-[190px] lg:ml-[220px]',
+    'ml-[169px] sm:ml-[195px] md:ml-[270px] lg:ml-[310px]',
+    'ml-[222px] sm:ml-[260px] md:ml-[350px] lg:ml-[400px]',
+  ]
+  const sizeClasses = [
+    'sm:w-[60px] sm:h-[80px] md:w-[70px] md:h-[95px] lg:w-[80px] lg:h-[109px]',
+  ]
+  return `${baseClasses} ${marginClasses[index] || ''} ${sizeClasses.join(' ')}`
+}
 </script>
 
 <style scoped>
+.card-container {
+  position: relative;
+}
+
 .card {
-    background: #FFF;
-    box-shadow: 0px 2px 10px -2px #000;
+  background: #fff;
+  box-shadow: 0px 2px 10px -2px #000;
 }
 </style>

@@ -1,33 +1,49 @@
-const io = require("socket.io")(3000, {
-    cors: {
-        origin: ['http://localhost:5173'] 
-    }
-})
-
-const rooms = {};
-
-io.on('connection', socket => {
-    socket.on('joinRoom', ({ userId, roomId, chips, seatPosition }) => {
-        if (!rooms[roomId]) {
-            rooms[roomId] = new Room(roomId);
-        }
-
-        const player = new Player(userId, socket.id, chips, seatPosition);
-        rooms[roomId].addPlayer(player);
-
-        socket.join(roomId); // Join the Socket.IO room
-
-        // Notify other players in the room
-        socket.to(roomId).emit('playerJoined', { userId, seatPosition, chips });
-
-        // Start the game if conditions are met
-        if (rooms[roomId].players.length === 2) {
-            rooms[roomId].startHand();
-        }
-    });
-
-    // Handle disconnection
-    socket.on('disconnect', () => {
-        // Remove player from their room and handle disconnection logic
-    });
+const express = require('express');
+const http = require('http');
+const socketIO = require('socket.io');
+const app = express();
+const server = http.createServer(app);
+const io = socketIO(server, {
+  cors: {
+    origin: "*",
+  },
 });
+
+const rooms = {
+  "1": {
+    tableName: "Test Room 1",
+    currency: "$",
+    smallBlind: 2.50,
+    bigBlind: 5,
+    gameType: "cash",
+    gameVariant: "holdem",
+    players: [],
+    deck: null,
+    flop: null,
+    turn: null,
+    river: null,
+  },
+};
+
+io.on('connection', (socket) => {
+  console.log(`User connected: ${socket.id}`);
+
+  socket.on('checkRoomExists', (roomId, callback) => {
+    console.log('Checking room exists for roomId:', roomId);
+    const roomExists = rooms.hasOwnProperty(roomId);
+    console.log('Room exists:', roomExists);
+    callback(roomExists);
+  });
+
+  socket.on('getRoomData', (roomId, callback) => {
+    const roomData = rooms[roomId];
+    callback(roomData);
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`User disconnected: ${socket.id}`);
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

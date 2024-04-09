@@ -17,7 +17,7 @@
     }
 }
 .wave {
-    background: rgb(0,0,0, 10%);
+    background: rgb(0,0,0, 3%);
     border-radius: 1000% 1000% 0 0;
     position: fixed;
     width: 200%;
