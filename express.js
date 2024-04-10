@@ -1,3 +1,6 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
 const express = require('express')
 const bodyParser = require('body-parser')
 const bcrypt = require('bcrypt')
@@ -81,7 +84,7 @@ app.post('/login', (req, res) => {
     }
 
     // login successful
-    let token = jwt.sign({ userId: user._id }, 'secretkey')
+    let token = jwt.sign({ userId: user._id, username: user.username }, process.env.JWT_SECRET)
     return res.status(200).json({
       title: 'login success',
       token: token

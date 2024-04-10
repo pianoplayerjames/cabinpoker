@@ -3,68 +3,123 @@ import { defineStore } from 'pinia'
 export const useGameStore = defineStore('game', {
   state: () => ({
     roomExists: false,
-    roomData: null,
     roomId: null,
-    tableName: "CabinPoker Cash table VI - Blinds:",
-    currency: "$",
-    smallBlind: 2.50,
-    bigBlind: 5,
+    timer: null,
+    tableName: null,
+    currency: null,
+    smallBlind: null,
+    bigBlind: null,
     flop: null,
     turn: null,
     river: null,
+    gameType: null,
+    gameVariant: null,
     playerAction: 0,
-    players: Array(10).fill().map((_, index) => ({
-      player: '',
-      seat: index,
-      bankroll: '0',
-      playing: 0,
-      pos: '',
-      card1: null,
-      card2: null
-    })),
-    deck: [
-      "as", "2s", "3s", "4s", "5s", "6s", "7s", "8s", "9s", "10s", "js", "qs", "ks",
-      "ac", "2c", "3c", "4c", "5c", "6c", "7c", "8c", "9c", "10c", "jc", "qc", "kc",
-      "ah", "2h", "3h", "4h", "5h", "6h", "7h", "8h", "9h", "10h", "jh", "qh", "kh",
-      "ad", "2d", "3d", "4d", "5d", "6d", "7d", "8d", "9d", "10d", "jd", "qd", "kd"
-    ]
+    players: []
   }),
   actions: {
     async checkRoomExists(roomId, socket) {
       return new Promise((resolve) => {
         socket.emit('checkRoomExists', parseInt(roomId), (exists) => {
           this.roomExists = exists;
+          if(exists) {
+            this.setRoomId(roomId);
+          }
           resolve(exists);
         });
       });
     },
-    async getRoomData(roomId, socket) {
+    async getRoomState(roomId, socket, token = null) {
       return new Promise((resolve) => {
-        socket.emit('getRoomData', roomId, (roomData) => {
-          this.roomData = roomData;
-          resolve(roomData);
+        socket.emit('getRoomState', roomId, token, async (data, error) => {
+          if(error) {
+            resolve(null);
+            return;
+          }
+    
+          console.log(data);
+      
+          if(data) {
+            this.tableName = data.tableName || this.tableName;
+            this.currency = data.currency || this.currency;
+            this.smallBlind = data.smallBlind || this.smallBlind;
+            this.bigBlind = data.bigBlind || this.bigBlind;
+            this.gameType = data.gameType || this.gameType;
+            this.gameVariant = data.gameVariant || this.gameVariant;
+            this.flop = data.flop || this.flop;
+            this.turn = data.turn || this.turn;
+            this.river = data.river || this.river;
+    
+            // Refactoring to accommodate the updated data structure
+            this.players = data.players.map(seat => {
+              // The server now sends a coherent 'playing' status at the seat level,
+              // so we no longer default it to 0 for empty seats.
+              if(seat.player) {
+                return {
+                  ...seat, // Spreading seat to keep seat-level properties like 'playing'
+                  player: seat.player.username, // Assuming 'player' object has a 'username' property now
+                  bankroll: seat.bankroll || seat.player.bankroll, // Use seat bankroll if available, otherwise use player's bankroll
+                  card1: seat.player.card1, // Directly using card1 from the 'player' object
+                  card2: seat.player.card2, // Directly using card2 from the 'player' object
+                };
+              } else {
+                // For empty seats, retain the structure but ensure 'player' field is explicitly null
+                return {
+                  ...seat, // This keeps 'playing', 'seat', and 'pos' as sent from the server
+                  player: null, // Explicitly marking no player is seated here
+                  bankroll: null, // Clearing bankroll
+                  card1: null, // No card
+                  card2: null, // No card
+                };
+              }
+            });
+            resolve(data);
+          } else {
+            resolve(null);
+          }
         });
       });
     },
-    setRoomId(roomId) {
-      this.roomId = roomId
-    },
-    shuffle(array) {
-      let currentIndex = array.length, temporaryValue, randomIndex;
     
-      while (currentIndex !== 0) {
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex -= 1;
-        temporaryValue = array[currentIndex];
-        array[currentIndex] = array[randomIndex];
-        array[randomIndex] = temporaryValue;
+    playerSeated(playerData) {
+      const seatIndex = playerData.seat;
+      if(seatIndex !== undefined && this.players[seatIndex]) {
+        this.players[seatIndex] = {
+          ...this.players[seatIndex],
+          ...playerData,
+          player: playerData.player
+        };
+      } else {
+        console.error('Tried to seat a player in an invalid or occupied seat');
       }
+    },
+    holeCards(seat, cards) {
+      const playerIndex = this.players.findIndex(player => player.seat === seat);
+      if (playerIndex !== -1) {
+        // Update the player's cards reactively
+        this.players[playerIndex] = {
+          ...this.players[playerIndex],
+          card1: cards.card1,
+          card2: cards.card2,
+        };
+      } else {
+        console.error(`Player not found at seat ${seat}`);
+      }
+    },
     
-      return array;
-    }
+    setRoomId(roomId) {
+      this.roomId = roomId;
+    },
+    updateTimer(timerValue) {
+      if (timerValue <= 0) {
+        this.timer = null;
+      } else {
+        this.timer = timerValue;
+      }
+    },
   },
   getters: {
-    playersWithPositions: (state) => {
+    playerPositions: (state) => {
       const numPlayers = state.players.length
       const positions = useGameStore().getPositions(numPlayers)
       return state.players.map((player, index) => ({
@@ -92,8 +147,6 @@ export const useGameStore = defineStore('game', {
             'top-52 -left-16 sm:top-1/2 sm:-left-28 md:top-1/2 md:-left-24 lg:top-1/2 lg:-left-40 xl:top-1/2 xl:-left-40',
             '-left-16 top-16 sm:-left-28 sm:top-20 md:-left-20 md:top-5 lg:-left-20 xl:-left-20',
           ]
-        default:
-          return Array(numPlayers).fill('-top-10 left-1/2 transform -translate-x-1/2')
       }
     }
   }
