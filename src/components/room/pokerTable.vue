@@ -6,9 +6,9 @@
     {{ gameStore.timer }}
   </div>
     <communityCards />
-    <div class="absolute bottom-10 mx-auto inset-x-0">
-        <actions />
-    </div>
+</div>
+<div class="absolute bottom-10 mx-auto inset-x-0">
+  <actions />
 </div>
 </template>
 
@@ -17,7 +17,7 @@ import { inject, computed, onMounted, onUnmounted } from 'vue'
 import { useGameStore } from '../../stores/store'
 import communityCards from './communityCards.vue'
 import players from './players.vue'
-import actions from '../room/actions/actions.vue'
+import actions from './actions.vue'
 
 const socket = inject('socket')
 const gameStore = useGameStore()

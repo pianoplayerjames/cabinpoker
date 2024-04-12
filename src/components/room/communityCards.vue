@@ -30,7 +30,7 @@ const cards = computed(() => {
 })
 
 const getCardClasses = (index) => {
-  const baseClasses = 'w-[50px] h-[68px] mt-[120px] sm:mt-[120px] md:mt-[60px]'
+  const baseClasses = 'w-[50px] h-[68px] mt-[50px] sm:mt-[50px] md:mt-[20px]'
   const marginClasses = [
     'ml-[10px] sm:ml-[0px] md:ml-[30px] lg:ml-[40px]',
     'ml-[63px] sm:ml-[65px] md:ml-[110px] lg:ml-[130px]',

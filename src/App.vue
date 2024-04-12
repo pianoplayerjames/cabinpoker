@@ -6,7 +6,7 @@
 </template>
 
 <script setup>
-import { ref, provide } from 'vue'
+import { ref, provide, onMounted } from 'vue'
 import waves from './components/ui/bg/waves.vue'
 
 const loggedin = ref(null)
@@ -18,6 +18,27 @@ if(localStorage.getItem('token') === null) {
 }
 
 provide("loggedin", loggedin)
+
+onMounted(() => {
+  preloadCardImages();
+});
+
+function preloadCardImages() {
+  const suits = ['h', 's', 'c', 'd'];
+  const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'j', 'q', 'k', 'a'];
+
+  suits.forEach(suit => {
+    values.forEach(value => {
+      const imagePath = `../src/assets/deck/mini/${value}${suit}.svg`;
+      preloadImage(imagePath);
+    });
+  });
+}
+
+function preloadImage(url) {
+  const img = new Image();
+  img.src = url;
+}
 </script>
 
 <style>

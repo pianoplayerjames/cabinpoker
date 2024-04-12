@@ -5,7 +5,7 @@
       <p>The room doesn't exist.</p>
     </div>
     <div v-else>
-      <pokerTable :id="tableId" :tableName="tableName" :currency="currency" :sb="smallBlind" :bb="bigBlind" />
+      <pokerTable />
     </div>
   </div>
 </div>
@@ -53,6 +53,33 @@ socket.on('updatePlayersStatus', (playersStatus) => {
     }
   });
 });
+
+socket.on('toAct', (data) => {
+  gameStore.startActionTimer(data.seat, data.timeLeft);
+});
+
+socket.on('updateActionTimer', (data) => {
+    console.log(`Timer update received for seat ${data.seat} with ${data.timeLeft} seconds remaining`);
+    gameStore.updateActionTimer(data.initialTimer - 1, data.seat, data.timeLeft - 1);
+});
+
+socket.on('playerFolded', (data) => {
+    console.log(`Player at seat ${data.seat} has folded.`);
+    gameStore.playerFolded(data.seat);
+});
+
+
+socket.on('flop', (flopCards) => {
+    gameStore.setFlop(flopCards);
+  });
+
+  socket.on('turn', (turnCard) => {
+    gameStore.setTurn(turnCard);
+  });
+
+  socket.on('river', (riverCard) => {
+    gameStore.setRiver(riverCard);
+  });
 
 
 onUnmounted(() => {

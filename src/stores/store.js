@@ -4,6 +4,9 @@ export const useGameStore = defineStore('game', {
   state: () => ({
     roomExists: false,
     roomId: null,
+    toAct: null,
+    initialTimer: null,
+    actionTimer: null,
     timer: null,
     tableName: null,
     currency: null,
@@ -50,26 +53,22 @@ export const useGameStore = defineStore('game', {
             this.turn = data.turn || this.turn;
             this.river = data.river || this.river;
     
-            // Refactoring to accommodate the updated data structure
             this.players = data.players.map(seat => {
-              // The server now sends a coherent 'playing' status at the seat level,
-              // so we no longer default it to 0 for empty seats.
               if(seat.player) {
                 return {
-                  ...seat, // Spreading seat to keep seat-level properties like 'playing'
-                  player: seat.player.username, // Assuming 'player' object has a 'username' property now
-                  bankroll: seat.bankroll || seat.player.bankroll, // Use seat bankroll if available, otherwise use player's bankroll
-                  card1: seat.player.card1, // Directly using card1 from the 'player' object
-                  card2: seat.player.card2, // Directly using card2 from the 'player' object
+                  ...seat,
+                  player: seat.player.username,
+                  bankroll: seat.bankroll || seat.player.bankroll,
+                  card1: seat.player.card1,
+                  card2: seat.player.card2,
                 };
               } else {
-                // For empty seats, retain the structure but ensure 'player' field is explicitly null
                 return {
-                  ...seat, // This keeps 'playing', 'seat', and 'pos' as sent from the server
-                  player: null, // Explicitly marking no player is seated here
-                  bankroll: null, // Clearing bankroll
-                  card1: null, // No card
-                  card2: null, // No card
+                  ...seat,
+                  player: null,
+                  bankroll: null,
+                  card1: null,
+                  card2: null,
                 };
               }
             });
@@ -80,7 +79,6 @@ export const useGameStore = defineStore('game', {
         });
       });
     },
-    
     playerSeated(playerData) {
       const seatIndex = playerData.seat;
       if(seatIndex !== undefined && this.players[seatIndex]) {
@@ -95,8 +93,7 @@ export const useGameStore = defineStore('game', {
     },
     holeCards(seat, cards) {
       const playerIndex = this.players.findIndex(player => player.seat === seat);
-      if (playerIndex !== -1) {
-        // Update the player's cards reactively
+      if(playerIndex !== -1) {
         this.players[playerIndex] = {
           ...this.players[playerIndex],
           card1: cards.card1,
@@ -106,7 +103,32 @@ export const useGameStore = defineStore('game', {
         console.error(`Player not found at seat ${seat}`);
       }
     },
-    
+    startActionTimer(seat, duration) {
+      this.toAct = seat;
+      this.actionTimer = duration;
+      this.initialTimer = duration; // Ensure this is only set once per turn/start
+    },
+    updateActionTimer(initialTimer, seat, timeLeft) {
+      this.initialTimer = initialTimer;
+      this.actionTimer = timeLeft;
+      this.toAct = seat;
+    },
+    clearActionTimer() {
+      this.actionTimer = null;
+    },
+    setToAct(seat) {
+      this.toAct = seat;
+      this.actionTimer = this.initialTimer;
+    },
+    setFlop(flop) {
+      this.flop = flop;
+    },
+    setTurn(turn) {
+      this.turn = turn;
+    },
+    setRiver(river) {
+      this.river = river;
+    },
     setRoomId(roomId) {
       this.roomId = roomId;
     },
@@ -117,6 +139,24 @@ export const useGameStore = defineStore('game', {
         this.timer = timerValue;
       }
     },
+    playerFolded(seat) {
+      // Find the player at the specified seat
+      const playerIndex = this.players.findIndex(player => player.seat === seat);
+      if (playerIndex !== -1) {
+        // Set the cards to null and update other necessary state fields
+        this.players[playerIndex].card1 = null;
+        this.players[playerIndex].card2 = null;
+        // Assuming 'playing' field indicates whether the player is active in the current round
+        this.players[playerIndex].playing = 0;
+    
+        // Optionally, update UI or handle other changes that should occur when a player folds
+        // For example, you might want to emit an event or log this action
+        console.log(`Player at seat ${seat} has folded.`);
+      } else {
+        console.error(`No player found at seat ${seat} to fold.`);
+      }
+    },
+    
   },
   getters: {
     playerPositions: (state) => {
